@@ -7,8 +7,7 @@ from postparam import postparam, objective_function
 import utils
 
 
-def debug(dynsys, snr, time_data, freq_data,
-          prior_params, prior_params_std, posterior_params):
+def debug(dynsys, snr, time_data, freq_data, prior_params, posterior_params):
     utils.plot_time_data(
         inputs=time_data.inputs,
         outputs=time_data.outputs,
@@ -20,7 +19,7 @@ def debug(dynsys, snr, time_data, freq_data,
         freq_data=freq_data,
         admittance_matrix=dynsys.admittance_matrix,
         prior_params=prior_params,
-        prior_params_std=prior_params_std
+        prior_params_std=dynsys.param_uncertainty
     )
     utils.plot_objective_function(
         obj_func=obj_func,
@@ -32,7 +31,7 @@ def debug(dynsys, snr, time_data, freq_data,
     print('=============================================================')
     print('SNR =', snr)
     print('PRIOR PARAMETERS    :', prior_params)
-    print('PRIOR PARAMETERS STD:', prior_params_std)
+    print('PRIOR PARAMETERS STD:', dynsys.param_uncertainty)
     print('POSTERIOR PARAMETERS:', posterior_params)
     print('TRUE PARAMETERS     :', dynsys.true_params)
     print('f(PRIOR PARAMETERS)     =', obj_func.compute(prior_params))
@@ -56,24 +55,23 @@ def handle_one_snr(dynsys, time_data, snr):
     )
 
     start_time = time.time()
-    prior_params, prior_params_std = dynsys.perturb_params()
+    prior_params = dynsys.perturb_params()
     posterior_params = postparam.compute_posterior_params(
         freq_data=freq_data,
         admittance_matrix=dynsys.admittance_matrix,
         prior_params=prior_params,
-        prior_params_std=prior_params_std
+        prior_params_std=dynsys.param_uncertainty
     )
     end_time = time.time()
 
     debug(
         dynsys, snr, time_data, freq_data,
-        prior_params, prior_params_std, posterior_params
+        prior_params, posterior_params
     )
 
     return {
         'snr': snr,
         'prior_params': prior_params,
-        'prior_params_std': prior_params_std,
         'posterior_params': posterior_params,
         'optimization_time': end_time - start_time
     }
