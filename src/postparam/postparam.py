@@ -61,19 +61,19 @@ def prepare_freq_data(time_data,
         freq_data (FreqData): Data after transformation from time domain
             to frequency domain.
     """
-    if snr < 0.0:
-        raise ValueError('SNR can not be negative.')
+    if snr is not None and snr <= 0.0:
+        raise ValueError('SNR should be positive.')
     if min_freq < 0.0:
         raise ValueError('min_freq can not be negative.')
     if min_freq > max_freq:
-        raise ValueError('min_freq must be less than max_freq.')
+        raise ValueError('min_freq must be less or equal to max_freq.')
 
     time_data_copy = copy.deepcopy(time_data)
 
     if snr is not None:
         time_data_copy.apply_white_noise(snr)
     elif time_data.input_std_devs is None or time_data.output_std_devs is None:
-        raise ValueError('Noise is not specified.')
+        raise ValueError('Measurement noise is not specified.')
 
     freq_data = data.FreqData(time_data_copy, remove_zero_freq)
     freq_data.trim(min_freq, max_freq)

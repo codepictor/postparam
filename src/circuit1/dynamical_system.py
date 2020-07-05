@@ -13,7 +13,7 @@ class DynamicalSystem:
 
         min_t = 0.0
         max_t = 10.0
-        dt = 0.001
+        dt = 0.005
         points_n = int((max_t - min_t) / dt)
 
         t = np.linspace(0, 10, num=points_n)
@@ -33,14 +33,14 @@ class DynamicalSystem:
 
     def perturb_params(self):
         """Perturb true parameters of a dynamical system."""
-        dev_fractions = np.array([1.0])
+        dev_fractions = np.array([0.3])
         perturbations = np.random.uniform(low=-dev_fractions, high=dev_fractions)
         perturbed_params = (perturbations + 1.0) * self.true_params
         return perturbed_params, dev_fractions
 
     @property
     def true_params(self):
-        return np.array([(10**4) * (27 * 10**(-12))])
+        return np.array([(10**9) * (27 * 10**(-12))])
 
     @property
     def system_name(self):

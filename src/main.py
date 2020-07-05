@@ -97,12 +97,10 @@ def main():
     print('optimization time std  =', opt_time.std(), '(seconds)')
 
     utils.plot_params_convergence(
+        dynsys=dynsys,
         snrs=snrs,
         prior_values=np.array([snr_info['prior_params'] for snr_info in opt_info]),
-        posterior_values=np.array([snr_info['posterior_params'] for snr_info in opt_info]),
-        true_values=dynsys.true_params,
-        params_names=dynsys.params_names,
-        dynsys_name=dynsys.system_name
+        posterior_values=np.array([snr_info['posterior_params'] for snr_info in opt_info])
     )
 
 

@@ -56,13 +56,13 @@ def plot_objective_function(obj_func, true_params, param_names, dynsys_name):
     """Make 1-D plots of the objective function."""
     n_params = len(true_params)
     n_points = 500
-    fig, axes = plt.subplots(n_params, 1, figsize=(16, 4 * n_params))
+    fig, axes = plt.subplots(n_params, 1, figsize=(16, 6 * n_params))
 
     for param_idx in range(n_params):
         true_param = true_params[param_idx]
         args = np.tile(true_params, (n_points, 1))
         args[:, param_idx] = 1.0 * np.linspace(
-            start=0, stop=2*true_param, num=n_points
+            start=-true_param, stop=3*true_param, num=n_points
         )
         obj_func_values = obj_func.compute(args)
         param_name = (
@@ -125,18 +125,14 @@ def plot_measurements_and_predictions(freqs, measurements, predictions,
     plt.close('all')
 
 
-def plot_params_convergence(snrs, prior_values, posterior_values,
-                            true_values, params_names, dynsys_name):
+def plot_params_convergence(dynsys, snrs, prior_values, posterior_values):
     """Plot convergence of parameters for different SNR."""
     assert len(snrs) == len(posterior_values) == len(prior_values)
-    assert (prior_values.shape[1] == posterior_values.shape[1]
-            == len(true_values) == len(params_names))
-    assert (true_values > 0.0).all()
-    assert len(dynsys_name) > 0
+    assert prior_values.shape[1] == posterior_values.shape[1]
 
     plt.rc('font', family='serif')
     plt.rc('text', usetex=True)
-    n_params = len(true_values)
+    n_params = len(dynsys.true_params)
     fig, axes = plt.subplots(n_params, 1, figsize=(24, 12 * n_params))
 
     for param_idx in range(n_params):
@@ -145,15 +141,15 @@ def plot_params_convergence(snrs, prior_values, posterior_values,
             snrs=snrs,
             prior_values=prior_values[:, param_idx],
             posterior_values=posterior_values[:, param_idx],
-            true_value=true_values[param_idx],
-            param_name=params_names[param_idx]
+            true_value=dynsys.true_params[param_idx],
+            param_name=dynsys.params_names[param_idx]
         )
 
     fig.tight_layout()
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys_name, 'params_convergences.pdf'
+            '..', 'graphics', dynsys.system_name, 'params_convergences.pdf'
         ),
         dpi=180, format='pdf'
     )
@@ -164,6 +160,7 @@ def _plot_param_convergence(ax, snrs,
                             prior_values, posterior_values,
                             true_value, param_name):
     assert len(snrs) == len(prior_values) == len(posterior_values)
+    # assert snrs == [1, 2, ..., 21]
 
     ax.plot(
         snrs, prior_values,

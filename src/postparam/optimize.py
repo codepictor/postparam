@@ -1,5 +1,6 @@
 """Minimization of the objective function."""
 
+
 import scipy as sp
 
 
@@ -21,7 +22,6 @@ def minimize(func, x0):
         x0=x0,
         method=None
     )
-
     # print(opt_res)
     return opt_res.x
 
