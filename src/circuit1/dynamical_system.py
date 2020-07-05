@@ -20,7 +20,7 @@ class DynamicalSystem:
             epsilon0 * np.cos(omega0 * t)
         ])
         outputs = np.array([
-            (epsilon0 / (1 + (tau * omega0) ** 2)) *
+            (epsilon0 / (1 + (tau * omega0)**2)) *
             (tau * omega0 * np.sin(omega0 * t) + np.cos(omega0 * t))
         ])
 
@@ -32,15 +32,17 @@ class DynamicalSystem:
 
     def perturb_params(self):
         """Perturb true parameters of a dynamical system."""
-        dev_fractions = self.param_uncertainty
-        perturbations = np.random.uniform(low=-dev_fractions, high=dev_fractions)
+        perturbations = np.random.uniform(
+            low=-self.param_uncertainty,
+            high=self.param_uncertainty
+        )
         perturbed_params = (perturbations + 1.0) * self.true_params
         return perturbed_params
 
     @property
     def true_params(self):
-        # return np.array([(10**11) * (27 * 10**(-12))])
-        return np.array([2.7 * 10**(-1)])
+        # return np.array([(10 * 10**3) * (2.7 * 10**(-6))])
+        return np.array([2.7 * 10**(-2)])
 
     @property
     def param_uncertainty(self):
@@ -60,7 +62,7 @@ class DynamicalSystem:
 
     @property
     def max_freq(self):
-        return 25.0
+        return 8.0
 
     @property
     def admittance_matrix(self):

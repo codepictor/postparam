@@ -287,10 +287,15 @@ class ObjectiveFunction:
             computed_gamma_L, computed_R
         )
 
+        # det_sign, ln_abs_det = np.linalg.slogdet(computed_gamma_L.toarray())
+        # if det_sign != 1:
+        #     raise ValueError('Determinant of the covariance matrix '
+        #                      '(aka gamma_L) should be positive. '
+        #                      'Something went wrong.')
         return (
             curr_delta_params @ self._inv_gamma_g @ curr_delta_params
             + computed_R @ computed_inv_gamma_L_dot_R
-            # + np.linalg.slogdet(computed_gamma_L.toarray())[1]
+            # + ln_abs_det
         )
 
     def compute(self, sys_params):

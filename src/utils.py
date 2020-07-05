@@ -22,7 +22,7 @@ def _plot_time_data(data, dt, dynsys_name, plot_name):
     n_sensors = data.shape[0]
     fig, axes = plt.subplots(
         n_sensors, 1,
-        figsize=(data.shape[1] // 100, 4 * n_sensors)
+        figsize=(data.shape[1] // 10, 4 * n_sensors)
     )
 
     for sensor_idx in range(data.shape[0]):
