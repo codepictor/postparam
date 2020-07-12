@@ -70,7 +70,7 @@ def plot_objective_function(obj_func, true_params, param_names, dynsys_name):
             else 'param' + str(param_idx)
         )
 
-        ax = axes[param_idx] if param_idx > 1 else axes
+        ax = axes[param_idx] if len(true_params) > 1 else axes
         ax.set_title('Vary $' + param_name + '$', fontsize=20)
         ax.plot(args[:, param_idx], obj_func_values)
         ax.axvline(true_param, alpha=0.75, color='red')
@@ -137,7 +137,7 @@ def plot_params_convergence(dynsys, snrs, prior_values, posterior_values):
 
     for param_idx in range(n_params):
         _plot_param_convergence(
-            ax=axes[param_idx] if param_idx > 1 else axes,
+            ax=axes[param_idx] if n_params > 1 else axes,
             snrs=snrs,
             prior_values=prior_values[:, param_idx],
             posterior_values=posterior_values[:, param_idx],

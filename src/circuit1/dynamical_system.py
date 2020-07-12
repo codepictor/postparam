@@ -6,7 +6,6 @@ from . import admittance_matrix
 class DynamicalSystem:
 
     def generate_time_data(self):
-        """Simulate data in time domain."""
         epsilon0 = 3
         omega0 = 2 * np.pi * 4  # 4 Hz
         tau = self.true_params[0]
@@ -21,7 +20,7 @@ class DynamicalSystem:
         ])
         outputs = np.array([
             (epsilon0 / (1 + (tau * omega0)**2)) *
-            (tau * omega0 * np.sin(omega0 * t) + np.cos(omega0 * t))
+            (tau * omega0 * np.sin(omega0 * t) + np.cos(omega0 * t) - np.exp(-t / tau))
         ])
 
         return {
@@ -30,8 +29,7 @@ class DynamicalSystem:
             'dt': dt
         }
 
-    def perturb_params(self):
-        """Perturb true parameters of a dynamical system."""
+    def perturb_true_params(self):
         perturbations = np.random.uniform(
             low=-self.param_uncertainty,
             high=self.param_uncertainty
@@ -42,7 +40,7 @@ class DynamicalSystem:
     @property
     def true_params(self):
         # return np.array([(10 * 10**3) * (2.7 * 10**(-6))])
-        return np.array([2.7 * 10**(-2)])
+        return np.array([2.7 * 10**(-2)])  # tau
 
     @property
     def param_uncertainty(self):
@@ -55,6 +53,10 @@ class DynamicalSystem:
     @property
     def params_names(self):
         return ['\\tau']
+
+    @property
+    def remove_zero_freq(self):
+        return True
 
     @property
     def min_freq(self):

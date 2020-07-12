@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from circuit1 import dynamical_system
+from viscosity import dynamical_system
 from postparam import postparam, objective_function
 import utils
 
@@ -49,13 +49,13 @@ def handle_one_snr(dynsys, time_data, snr):
     freq_data = postparam.prepare_freq_data(
         time_data=time_data,
         snr=snr,
-        remove_zero_freq=True,
+        remove_zero_freq=dynsys.remove_zero_freq,
         min_freq=dynsys.min_freq,
         max_freq=dynsys.max_freq
     )
 
     start_time = time.time()
-    prior_params = dynsys.perturb_params()
+    prior_params = dynsys.perturb_true_params()
     posterior_params = postparam.compute_posterior_params(
         freq_data=freq_data,
         admittance_matrix=dynsys.admittance_matrix,
