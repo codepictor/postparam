@@ -119,14 +119,14 @@ def compute_posterior_params(freq_data, admittance_matrix,
     return posterior_params
 
 
-def predict_outputs(freq_data, admittance_matrix, dynsys_params):
+def predict_outputs(freqs, freq_data_inputs, admittance_matrix, dynsys_params):
     """Calculate outputs based on admittance matrix and inputs."""
     n_inputs = admittance_matrix.data.shape[1]
     n_outputs = admittance_matrix.data.shape[0]
-    n_freqs = len(freq_data.freqs)
+    n_freqs = len(freqs)
     n_params = len(dynsys_params)
-    assert n_inputs == freq_data.inputs.shape[0]
-    assert n_freqs == freq_data.inputs.shape[1]
+    assert n_inputs == freq_data_inputs.shape[0]
+    assert n_freqs == freq_data_inputs.shape[1]
 
     Y = admittance_matrix.data
     computed_Y = np.zeros((n_outputs, n_inputs, n_freqs), dtype=np.complex64)
@@ -142,12 +142,12 @@ def predict_outputs(freq_data, admittance_matrix, dynsys_params):
                 args=admittance_matrix.omega,
                 expr=element_expr,
                 modules='numexpr'
-            )(2.0 * np.pi * freq_data.freqs)
+            )(2.0 * np.pi * freqs)
 
     predictions = np.zeros((n_outputs, n_freqs), dtype=np.complex64)
     for freq_idx in range(n_freqs):
         predictions[:, freq_idx] = (
-            computed_Y[:, :, freq_idx] @ freq_data.inputs[:, freq_idx]
+            computed_Y[:, :, freq_idx] @ freq_data_inputs[:, freq_idx]
         )
     return predictions
 
