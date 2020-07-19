@@ -97,10 +97,10 @@ def compute_posterior_params(freq_data, admittance_matrix,
             len(freq_data.inputs) != admittance_matrix.data.shape[1]):
         raise ValueError('Inconsistent shapes of data and admittance matrix.')
     if len(prior_params.shape) != 1 or len(prior_params_std.shape) != 1:
-        raise ValueError('Prior parameters and deviations'
+        raise ValueError('Prior parameters and deviations '
                          'must be one-dimensional numpy arrays.')
     if prior_params.shape != prior_params_std.shape:
-        raise ValueError('Number of system parameters is not equal'
+        raise ValueError('Number of system parameters is not equal '
                          'to number of deviation fractions.')
 
     obj_func = objective_function.ObjectiveFunction(

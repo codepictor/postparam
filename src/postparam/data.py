@@ -5,8 +5,6 @@ in time and frequency domain respectively). Both classes derive from
 the abstract class Data. Typically, TimeData holds initial data.
 White noise can be applied to these data. After that, the data should
 be transformed to frequency domain by DFT (Discrete Fourier Transform).
-Finally, additional preliminary operations are also possible (removing
-zero frequency, trimming data and removing some frequency bands).
 
 """
 
@@ -45,7 +43,7 @@ class Data(abc.ABC):
         if not isinstance(outputs, np.ndarray):
             raise TypeError('outputs must be an instance of a numpy.ndarray.')
         if inputs.shape[1] != outputs.shape[1]:
-            raise ValueError('Inconsistent number of data points'
+            raise ValueError('Inconsistent number of data points '
                              'in inputs and outputs.')
         if inputs.shape[1] < 100:
             raise ValueError('Not enough points.')
@@ -81,10 +79,10 @@ class TimeData(Data):
                 of output data (see the 'output_std_devs' attribute).
         """
         if input_std_devs is not None and len(inputs) != len(input_std_devs):
-            raise ValueError('Number of inputs must be equal'
+            raise ValueError('Number of inputs must be equal '
                              'to number of input standard deviations.')
         if output_std_devs is not None and len(outputs) != len(output_std_devs):
-            raise ValueError('Number of outputs must be equal'
+            raise ValueError('Number of outputs must be equal '
                              'to number of output standard deviations.')
 
         super().__init__(inputs, outputs)
@@ -120,13 +118,13 @@ class TimeData(Data):
                 specified in dB (decibels).
         """
         if self.inputs.shape[1] != self.outputs.shape[1]:
-            raise ValueError('Inconsistent number of data points'
+            raise ValueError('Inconsistent number of data points '
                              'in inputs and outputs.')
         if snr < 0.0:
             raise ValueError('SNR can not be negative.')
         if self.input_std_devs is not None or self.output_std_devs is not None:
             raise ValueError('Attempt to apply noise to data having initialized'
-                             'noise standard deviations. It is incorrect.')
+                             ' noise standard deviations. It is incorrect.')
 
         self.input_std_devs = np.zeros(self.inputs.shape[0])
         self.output_std_devs = np.zeros(self.outputs.shape[0])
@@ -168,8 +166,6 @@ class FreqData(Data):
         It takes (2K + 1) points in time domain (white noise
         has been already applied) and constructs (K + 1) points of data
         in frequency domain (applying Discrete Fourier transform).
-        After that, zero frequency can be excluded because in many cases
-        of signal processing steady state has no useful information.
 
         Args:
             time_data (TimeData): Data in time domain.
@@ -255,23 +251,4 @@ class FreqData(Data):
             list(range(begin)) + list(range(end, self.outputs.shape[1])),
             axis=1
         )
-
-    def remove_band(self, min_freq, max_freq):
-        """Remove all data which are located at [min_freq; max_freq].
-
-        Note:
-            This method implies that frequencies in self.freqs
-            are sorted in ascending order.
-
-        Args:
-            min_freq (float): begin of frequency band
-            max_freq (float): end of frequency band
-        """
-        begin = np.searchsorted(self.freqs, min_freq, side='left')
-        end = np.searchsorted(self.freqs, max_freq, side='right')
-        removing_indexes = np.arange(begin, end)
-
-        self.freqs = np.delete(self.freqs, removing_indexes)
-        self.inputs = np.delete(self.inputs, removing_indexes, axis=1)
-        self.outputs = np.delete(self.outputs, removing_indexes, axis=1)
 
