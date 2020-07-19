@@ -86,10 +86,6 @@ class DynamicalSystem:
         return ['m', 'B']
 
     @property
-    def remove_zero_freq(self):
-        return False
-
-    @property
     def min_freq(self):
         return 0.0
 

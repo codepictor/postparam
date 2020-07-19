@@ -48,15 +48,11 @@ class DynamicalSystem:
 
     @property
     def system_name(self):
-        return 'circuit1'
+        return 'circuit'
 
     @property
     def params_names(self):
         return ['\\tau']
-
-    @property
-    def remove_zero_freq(self):
-        return True
 
     @property
     def min_freq(self):

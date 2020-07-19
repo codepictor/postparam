@@ -47,7 +47,7 @@ class Data(abc.ABC):
         if inputs.shape[1] != outputs.shape[1]:
             raise ValueError('Inconsistent number of data points'
                              'in inputs and outputs.')
-        if inputs.shape[1] < 10:
+        if inputs.shape[1] < 100:
             raise ValueError('Not enough points.')
 
         self.inputs = inputs
@@ -119,7 +119,9 @@ class TimeData(Data):
             snr (float): desired SNR (Signal to Noise Ratio)
                 specified in dB (decibels).
         """
-        assert self.inputs.shape[1] == self.outputs.shape[1]
+        if self.inputs.shape[1] != self.outputs.shape[1]:
+            raise ValueError('Inconsistent number of data points'
+                             'in inputs and outputs.')
         if snr < 0.0:
             raise ValueError('SNR can not be negative.')
         if self.input_std_devs is not None or self.output_std_devs is not None:
@@ -160,7 +162,7 @@ class FreqData(Data):
         output_std_devs (numpy.ndarray): Noise of output data.
     """
 
-    def __init__(self, time_data, remove_zero_freq=True):
+    def __init__(self, time_data):
         """Initialize data in frequency domain based on data in time domain.
 
         It takes (2K + 1) points in time domain (white noise
@@ -171,13 +173,14 @@ class FreqData(Data):
 
         Args:
             time_data (TimeData): Data in time domain.
-            remove_zero_freq (bool, optional): whether to remove
-                zero frequency from data
         """
+        if time_data.inputs.shape[1] % 2 == 0:
+            raise ValueError('Number of points (N) should be odd '
+                             'before applying DFT')
+
         dt = time_data.dt  # time step between signal data points
         fs = 1.0 / dt  # sampling frequency (in Hz)
         n_time_points = time_data.inputs.shape[1]  # N = number of data points
-        assert n_time_points % 2 == 1  # Ensure that N is odd (N = 2K + 1)
 
         # don't forget about the 2*pi factor!
         self.freqs = (fs / n_time_points *
@@ -201,13 +204,6 @@ class FreqData(Data):
         self.input_std_devs = time_data.input_std_devs * transform_factor
         self.output_std_devs = time_data.output_std_devs * transform_factor
 
-        # zero frequency amplitude can be too large
-        # compared to amplitudes at other frequencies
-        if remove_zero_freq:
-            self.freqs = self.freqs[1:]
-            self.inputs = np.delete(self.inputs, 0, axis=1)
-            self.outputs = np.delete(self.outputs, 0, axis=1)
-
     def _apply_dft(self, time_points):
         # apply DFT to an array representing one time series
         assert len(time_points.shape) == 1
@@ -215,20 +211,14 @@ class FreqData(Data):
         assert n_time_points % 2 == 1
 
         window = sp.signal.windows.hann(n_time_points)
-        windowed_time_points = np.multiply(
-            window,
-            scipy.signal.detrend(data=time_points, type='constant')
-        )
+        windowed_time_points = np.multiply(window, time_points)
 
         freq_points = np.fft.fft(windowed_time_points / n_time_points)
         freq_points_len = (n_time_points + 1) // 2
         freq_points = freq_points[0:freq_points_len]
 
         # steady component = (1/N) * |F(0)|, other amplitudes = (2/N) * |F(k)|
-        freq_points[1:] *= 2.0  # Double all except for DC
-
-        # we have removed steady component by using the 'detrend' function
-        freq_points[0] = 0.0
+        freq_points[1:] *= 2.0
 
         return freq_points
 

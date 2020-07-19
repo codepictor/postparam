@@ -49,7 +49,6 @@ def handle_one_snr(dynsys, time_data, snr):
     freq_data = postparam.prepare_freq_data(
         time_data=time_data,
         snr=snr,
-        remove_zero_freq=dynsys.remove_zero_freq,
         min_freq=dynsys.min_freq,
         max_freq=dynsys.max_freq
     )

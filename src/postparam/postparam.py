@@ -38,9 +38,7 @@ def prepare_time_data(inputs, outputs, dt):
     )
 
 
-def prepare_freq_data(time_data,
-                      snr=None, remove_zero_freq=True,
-                      min_freq=None, max_freq=None):
+def prepare_freq_data(time_data, snr=None, min_freq=None, max_freq=None):
     """Transform data from time domain to frequency domain.
 
     Args:
@@ -48,9 +46,6 @@ def prepare_freq_data(time_data,
         snr (double, optional): The value of SNR specifying noise
             which will be applied to data in time domain.
             If None, there will be no applying of any noise.
-        remove_zero_freq (bool, optional): Whether to remove
-            the constant components from the given data
-            (corresponding to zero frequency).
         min_freq (double, optional): The left border of analyzing data
             in frequency domain. Defaults to None that is equivalent to 0.
         max_freq (double, optional): The right border of analyzing data
@@ -75,7 +70,7 @@ def prepare_freq_data(time_data,
     elif time_data.input_std_devs is None or time_data.output_std_devs is None:
         raise ValueError('Measurement noise is not specified.')
 
-    freq_data = data.FreqData(time_data_copy, remove_zero_freq)
+    freq_data = data.FreqData(time_data_copy)
     freq_data.trim(min_freq, max_freq)
     return freq_data
 
