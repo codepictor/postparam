@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from circuit import dynamical_system
+from motor import dynamical_system
 from postparam import postparam, objective_function
 import utils
 
