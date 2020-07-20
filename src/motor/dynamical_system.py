@@ -8,25 +8,26 @@ from . import admittance_matrix
 class DynamicalSystem:
 
     def generate_time_data(self):
-        b = self.true_params[0]
+        b, K = self.true_params
         L = self._get_fixed_params()['L']
         R = self._get_fixed_params()['R']
         J = self._get_fixed_params()['J']
-        K = self._get_fixed_params()['K']
 
         A = np.array([
             [-b / J,  K / J],
             [-K / L, -R / L]
         ])
         B = np.array([
-            [0],
-            [1 / L]
+            [0, -1 / J],
+            [1 / L, 0]
         ])
         C = np.array([
-            [1, 0]
+            [1, 0],
+            [0, 1]
         ])
         D = np.array([
-            [0]
+            [0, 0],
+            [0, 0]
         ])
         sys = sp.signal.StateSpace(A, B, C, D)
 
@@ -36,18 +37,23 @@ class DynamicalSystem:
         tin = np.arange(min_t, max_t, step=dt)
 
         omega0 = 2 * np.pi * 10
-        V0 = 2
-        V = 12 + V0 * np.cos(omega0 * tin)
+        V = 12 + 2 * np.cos(omega0 * tin)
         # V = 12 * np.ones(len(tin))
+        T = 10.0 * np.ones(len(tin))
 
-        tout, yout, xout = sp.signal.lsim(sys, V, tin, X0=None)
+        tout, yout, xout = sp.signal.lsim(
+            sys,                 # linear system
+            np.array([V, T]).T,  # inputs
+            tin,                 # time
+            X0=None              # initial conditions
+        )
         assert (np.diff(tout) > dt * 99999999 / 100000000).all()
         assert (np.diff(tout) < dt * 100000001 / 100000000).all()
-        assert np.array_equal(xout[:, 0], yout)
+        assert np.array_equal(xout, yout)
 
         return {
-            'inputs': np.array([V]),
-            'outputs': np.array([yout]),
+            'inputs': np.array([V, T]),
+            'outputs': xout.T,
             'dt': dt
         }
 
@@ -63,17 +69,16 @@ class DynamicalSystem:
         return {
             'L': 0.5,
             'R': 1.0,
-            'J': 0.01,
-            'K': 0.01
+            'J': 0.01
         }
 
     @property
     def true_params(self):
-        return np.array([0.1])
+        return np.array([0.1, 0.01])  # b, K
 
     @property
     def param_uncertainty(self):
-        return np.array([0.5])
+        return np.array([0.5, 0.5])
 
     @property
     def system_name(self):
@@ -81,7 +86,7 @@ class DynamicalSystem:
 
     @property
     def params_names(self):
-        return ['b']
+        return ['b', 'K']
 
     @property
     def min_freq(self):
