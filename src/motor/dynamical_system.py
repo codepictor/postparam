@@ -32,14 +32,15 @@ class DynamicalSystem:
         sys = sp.signal.StateSpace(A, B, C, D)
 
         min_t = 0.0
-        max_t = 10.0
+        max_t = 25.0
         dt = 0.01
         tin = np.arange(min_t, max_t, step=dt)
 
         omega0 = 2 * np.pi * 10
         V = 12 + 2 * np.cos(omega0 * tin)
         # V = 12 * np.ones(len(tin))
-        T = 10.0 * np.ones(len(tin))
+        T = 0.1 * np.ones(len(tin))
+        T[:300] = 0
 
         tout, yout, xout = sp.signal.lsim(
             sys,                 # linear system
