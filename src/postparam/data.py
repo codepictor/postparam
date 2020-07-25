@@ -104,18 +104,18 @@ class TimeData(Data):
         already constructed, it is considered as an error.
 
         Note:
-            Be careful with the definition of SNR (Signal to Noise Ratio).
-            Should signal-mean be used when capturing the signal power?
+            Be careful with the definition of SNR (Signal-to-noise ratio).
+            Should signal mean be used when capturing the signal power?
             In many cases, we don't care about steady state offset.
             The signal that we care about is the perturbation
             on top of steady state. Let's call that our signal.
-            For example, if we have voltage vector x = V + dV,
+            For example, if we have voltage vector x = V + dV
             and we define our signal as dV,
-            then var(dV) / var(noise) is our SNR.
+            then std(dV) / std(noise) is equal to 10 ^ (SNR / 20).
 
         Args:
-            snr (float): desired SNR (Signal to Noise Ratio)
-                specified in dB (decibels).
+            snr (float): desired SNR (Signal-to-noise ratio)
+                measured in dB (decibels).
         """
         if self.inputs.shape[1] != self.outputs.shape[1]:
             raise ValueError('Inconsistent number of data points '

@@ -36,11 +36,10 @@ class DynamicalSystem:
         dt = 0.01
         tin = np.arange(min_t, max_t, step=dt)
 
-        omega0 = 2 * np.pi * 10
-        V = 12 + 2 * np.cos(omega0 * tin)
-        # V = 12 * np.ones(len(tin))
-        T = 0.1 * np.ones(len(tin))
-        T[:300] = 0
+        omega0 = 2 * np.pi
+        V = 12 + 3 * np.cos(10 * omega0 * tin) + 2 * np.sin(2 * omega0 * tin)
+        T = 0.05 + 0.05 * np.sin(omega0 * tin)
+        T[:200] = 0
 
         tout, yout, xout = sp.signal.lsim(
             sys,                 # linear system
