@@ -1,6 +1,6 @@
 """Classes to store data in time and frequency domains.
 
-This module defines two classes: TimeData and FreqData (to store data
+This module defines classes TimeData and FreqData (to store data
 in time and frequency domain respectively). Both classes derive from
 the abstract class Data. Typically, TimeData holds initial data.
 White noise can be applied to these data. After that, the data should
@@ -23,14 +23,14 @@ class Data(abc.ABC):
     will not be used.
 
     Attributes:
-        inputs (numpy.ndarray): Input data (denoted as u in the paper)
+        inputs (numpy.ndarray): Input data (denoted as u)
             with shape (n_inputs, n_data_points).
-        outputs (numpy.ndarray): Output data (denoted as y in the paper)
+        outputs (numpy.ndarray): Output data (denoted as y)
             with shape (n_outputs, n_data_points).
     """
 
     def __init__(self, inputs, outputs):
-        """Just save input and output data inside the class.
+        """Save input and output data inside the class.
 
         Args:
             inputs (numpy.ndarray): Input data (see the 'inputs'
@@ -48,8 +48,8 @@ class Data(abc.ABC):
         if inputs.shape[1] < 100:
             raise ValueError('Not enough points.')
 
-        self.inputs = inputs
-        self.outputs = outputs
+        self.inputs = inputs.copy()
+        self.outputs = outputs.copy()
 
 
 class TimeData(Data):
@@ -106,12 +106,12 @@ class TimeData(Data):
         Note:
             Be careful with the definition of SNR (Signal to Noise Ratio).
             Should signal-mean be used when capturing the signal power?
-            In many cases, we don't care about steady state offset:
-            it is useless information. The signal that we care about
-            is the perturbation on top of steady state. Let's call that
-            our signal. For example, if we have voltage vector
-            x = V + dV, and we define our signal as dV, then
-            var(dV)/var(noise) is our SNR.
+            In many cases, we don't care about steady state offset.
+            The signal that we care about is the perturbation
+            on top of steady state. Let's call that our signal.
+            For example, if we have voltage vector x = V + dV,
+            and we define our signal as dV,
+            then var(dV) / var(noise) is our SNR.
 
         Args:
             snr (float): desired SNR (Signal to Noise Ratio)
@@ -123,31 +123,33 @@ class TimeData(Data):
         if snr < 0.0:
             raise ValueError('SNR can not be negative.')
         if self.input_std_devs is not None or self.output_std_devs is not None:
-            raise ValueError('Attempt to apply noise to data having initialized'
-                             ' noise standard deviations. It is incorrect.')
+            raise ValueError('Attempt to apply noise to data with initialized '
+                             'noise standard deviations.')
 
         self.input_std_devs = np.zeros(self.inputs.shape[0])
         self.output_std_devs = np.zeros(self.outputs.shape[0])
         n_time_points = self.inputs.shape[1]
 
-        # applying white noise to inputs
+        # apply white noise to inputs
         for input_idx in range(len(self.input_std_devs)):
             self.input_std_devs[input_idx] = np.std(
                 self.inputs[input_idx], ddof=1
             ) / (10.0**(snr/20.0))
-            self.inputs[input_idx] += np.multiply(
-                np.random.normal(loc=0.0, scale=1.0, size=n_time_points),
-                self.input_std_devs[input_idx]
+            self.inputs[input_idx] += np.random.normal(
+                loc=0.0,
+                scale=self.input_std_devs[input_idx],
+                size=n_time_points
             )
 
-        # applying white noise to outputs
+        # apply white noise to outputs
         for output_idx in range(len(self.output_std_devs)):
             self.output_std_devs[output_idx] = np.std(
                 self.outputs[output_idx], ddof=1
             ) / (10.0**(snr/20.0))
-            self.outputs[output_idx] += np.multiply(
-                np.random.normal(loc=0.0, scale=1.0, size=n_time_points),
-                self.output_std_devs[output_idx]
+            self.outputs[output_idx] += np.random.normal(
+                loc=0.0,
+                scale=self.output_std_devs[output_idx],
+                size=n_time_points
             )
 
 
@@ -156,16 +158,16 @@ class FreqData(Data):
 
     Attributes:
         freqs (np.ndarray): frequencies in frequency domain
-        input_std_devs (numpy.ndarray): Noise of input data.
-        output_std_devs (numpy.ndarray): Noise of output data.
+        input_std_devs (numpy.ndarray): Noise in input data.
+        output_std_devs (numpy.ndarray): Noise in output data.
     """
 
     def __init__(self, time_data):
         """Initialize data in frequency domain based on data in time domain.
 
-        It takes (2K + 1) points in time domain (white noise
-        has been already applied) and constructs (K + 1) points of data
-        in frequency domain (applying Discrete Fourier transform).
+        It takes (2K + 1) points in time domain (white noise has been
+        already applied) and constructs (K + 1) points of data in
+        frequency domain (by applying Discrete Fourier transform).
 
         Args:
             time_data (TimeData): Data in time domain.
@@ -174,15 +176,12 @@ class FreqData(Data):
             raise ValueError('Number of points (N) should be odd '
                              'before applying DFT')
 
-        dt = time_data.dt  # time step between signal data points
-        fs = 1.0 / dt  # sampling frequency (in Hz)
-        n_time_points = time_data.inputs.shape[1]  # N = number of data points
+        n_time_points = time_data.inputs.shape[1]  # N (number of data points)
+        self.freqs = np.fft.fftfreq(  # don't forget about the 2*pi factor!
+            n_time_points, time_data.dt  # N, dt
+        )[:((n_time_points + 1) // 2)]  # zero frequency is not dropped
 
-        # don't forget about the 2*pi factor!
-        self.freqs = (fs / n_time_points *
-                      np.arange(0, (n_time_points + 1) / 2, 1))
-
-        # perform DFT
+        # apply DFT
         super().__init__(
             inputs=np.array([
                 self._apply_dft(time_data.inputs[input_idx])
@@ -196,25 +195,53 @@ class FreqData(Data):
 
         # calculate epsilons (variables representing noise)
         # in frequency domain based on epsilons in time domain
-        transform_factor = np.sqrt(2.0 / n_time_points)
+        transform_factor = self._get_std_transform_factor(n_time_points)
         self.input_std_devs = time_data.input_std_devs * transform_factor
         self.output_std_devs = time_data.output_std_devs * transform_factor
 
+    def _get_std_transform_factor(self, n_time_points):
+        # How real and imaginary parts of epsilons are distributed?
+        # It turns out that if the distribution of one epsilon is normal
+        # with zero mean in time domain (white noise), its distribution
+        # remains normal with zero mean in frequency domain as well.
+        # However, the variance should be multiplied by the coefficient
+        # which is called "transform factor" in this code.
+        window = self._get_window(n_time_points)
+        assert window.shape == (n_time_points,)
+        assert (window >= 0.0).all()
+        return np.sqrt(2 * np.sum(window**2)) / np.sum(window)
+
+    def _get_window(self, n_time_points):
+        # window to reduce the spectral leakage
+        return sp.signal.windows.hann(n_time_points)
+
     def _apply_dft(self, time_points):
-        # apply DFT to an array representing one time series
+        # apply DFT to one time series
         assert len(time_points.shape) == 1
         n_time_points = len(time_points)
         assert n_time_points % 2 == 1
 
-        window = sp.signal.windows.hann(n_time_points)
-        windowed_time_points = np.multiply(window, time_points)
+        window = self._get_window(n_time_points)
+        windowed_time_points = np.multiply(
+            window, time_points - np.mean(time_points)
+        )
 
-        freq_points = np.fft.fft(windowed_time_points / n_time_points)
-        freq_points_len = (n_time_points + 1) // 2
-        freq_points = freq_points[0:freq_points_len]
+        freq_points = np.fft.fft(windowed_time_points)
+        freq_points = freq_points[:((n_time_points + 1) // 2)]
+        freq_points /= n_time_points
 
-        # steady component = (1/N) * |F(0)|, other amplitudes = (2/N) * |F(k)|
-        freq_points[1:] *= 2.0
+        # The mean amplitude of the signal will be doubled. However, it will
+        # not affect the equation y = Yu (we double y and u at zero frequency),
+        # but the variance of the DC component will be equal to the variances
+        # at other frequencies. It will be important when we will compute
+        # the objective function.
+        freq_points *= 2.0
+
+        # windowing correction factor
+        freq_points *= (window.shape[0] / np.sum(window))
+
+        # signal mean
+        freq_points[0] = np.mean(time_points)
 
         return freq_points
 
@@ -229,26 +256,20 @@ class FreqData(Data):
             min_freq (float): minimum remaining frequency in the data
             max_freq (float): maximum remaining frequency in the data
         """
-        assert len(self.freqs) == self.inputs.shape[1] == self.outputs.shape[1]
         if min_freq < 0.0:
             raise ValueError('min_freq can not be negative.')
         if min_freq > max_freq:
-            raise ValueError('min_freq must be less than max_freq.')
+            raise ValueError('min_freq can not be greater than max_freq.')
+        assert len(self.freqs) == self.inputs.shape[1] == self.outputs.shape[1]
+        assert (self.freqs == np.sort(self.freqs)).all()
 
-        begin = (np.searchsorted(self.freqs, min_freq, side='left')
-                 if min_freq is not None else 0)
-        end = (np.searchsorted(self.freqs, max_freq, side='right')
-               if max_freq is not None else len(self.freqs))
+        ind = (self.freqs >= min_freq) & (self.freqs <= max_freq)
+        self.freqs = self.freqs[ind]
+        self.inputs = self.inputs[:, ind]
+        self.outputs = self.outputs[:, ind]
 
-        self.freqs = self.freqs[begin:end]
-        self.inputs = np.delete(
-            self.inputs,
-            list(range(begin)) + list(range(end, self.inputs.shape[1])),
-            axis=1
-        )
-        self.outputs = np.delete(
-            self.outputs,
-            list(range(begin)) + list(range(end, self.outputs.shape[1])),
-            axis=1
-        )
+        assert len(self.freqs) == self.inputs.shape[1] == self.outputs.shape[1]
+        assert (self.freqs == np.sort(self.freqs)).all()
+        assert (self.freqs >= min_freq).all()
+        assert (self.freqs <= max_freq).all()
 
