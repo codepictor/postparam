@@ -132,9 +132,9 @@ class TimeData(Data):
 
         # apply white noise to inputs
         for input_idx in range(len(self.input_std_devs)):
-            self.input_std_devs[input_idx] = np.std(
-                self.inputs[input_idx], ddof=1
-            ) / (10.0**(snr/20.0))
+            self.input_std_devs[input_idx] = np.sqrt(np.sum(
+                (self.inputs[input_idx] / np.sqrt(n_time_points))**2
+            )) / (10.0**(snr/20.0))
             self.inputs[input_idx] += np.random.normal(
                 loc=0.0,
                 scale=self.input_std_devs[input_idx],
@@ -143,9 +143,9 @@ class TimeData(Data):
 
         # apply white noise to outputs
         for output_idx in range(len(self.output_std_devs)):
-            self.output_std_devs[output_idx] = np.std(
-                self.outputs[output_idx], ddof=1
-            ) / (10.0**(snr/20.0))
+            self.output_std_devs[output_idx] = np.sqrt(np.sum(
+                (self.outputs[output_idx] / np.sqrt(n_time_points))**2
+            )) / (10.0**(snr/20.0))
             self.outputs[output_idx] += np.random.normal(
                 loc=0.0,
                 scale=self.output_std_devs[output_idx],
