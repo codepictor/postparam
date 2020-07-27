@@ -232,18 +232,18 @@ class FreqData(Data):
         freq_points = freq_points[:((n_time_points + 1) // 2)]
         freq_points /= n_time_points
 
-        # The mean amplitude of the signal will be doubled. However, it will
-        # not affect the equation y = Yu (we double y and u at zero frequency),
-        # but the variance of the DC component will be equal to the variances
-        # at other frequencies. It will be important when we will compute
-        # the objective function.
+        # The mean amplitude of the signal will be doubled.
+        # However, we have subtracted the mean, so the DC component
+        # should be approximately 0 after DFT. At the same time the variance of
+        # the DC component will be equal to the variances at other frequencies.
+        # It will be important when we will compute the objective function.
         freq_points *= 2.0
 
         # windowing correction factor
         freq_points *= (window.shape[0] / np.sum(window))
 
         # signal mean
-        freq_points[0] = np.mean(time_points)
+        freq_points[0] += np.mean(time_points)
 
         return freq_points
 

@@ -246,7 +246,7 @@ def plot_optimization_time(snrs, optimization_time, dynsys):
     std = optimization_time.std(axis=1)
 
     fig = plt.figure(figsize=(20, 10))
-    plt.plot(snrs, optimization_time.mean(axis=1), marker='o', color='b')
+    plt.plot(snrs, mean, marker='o', color='b')
     plt.fill_between(snrs, mean - std, mean + std, alpha=0.15, color='b')
 
     plt.xlabel('SNR')
