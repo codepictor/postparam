@@ -7,13 +7,13 @@ class DynamicalSystem:
 
     def generate_time_data(self):
         F0 = 3
-        omega0 = 2 * np.pi * 2  # 2 Hz
+        omega0 = 2 * np.pi * 0.5  # 0.5 Hz
         m = self.true_params[0]
         B = self.true_params[1]
 
         min_t = 0.0
-        max_t = 50.0
-        dt = 0.05
+        max_t = 60.0
+        dt = 0.2
         t = np.arange(min_t, max_t, step=dt)
 
         Fx = F0 * (1 + np.sin(omega0 * t))

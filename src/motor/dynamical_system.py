@@ -33,13 +33,14 @@ class DynamicalSystem:
 
         min_t = 0.0
         max_t = 15.0
-        dt = 0.025
+        dt = 0.02
         tin = np.arange(min_t, max_t, step=dt)
 
         omega0 = 2 * np.pi
         V = 40 + 3 * np.cos(10 * omega0 * tin) + 2 * np.sin(2 * omega0 * tin)
-        T = 0.05 + 0.05 * np.sin(omega0 * (tin - 2.0) + 3 / 2 * np.pi)
-        T[:80] = 0
+        start_T = 2.0
+        T = 0.05 + 0.05 * np.sin(omega0 * (tin - start_T) + 3 / 2 * np.pi)
+        T[tin < start_T] = 0
 
         tout, yout, xout = sp.signal.lsim(
             sys,                 # linear system

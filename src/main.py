@@ -12,30 +12,6 @@ def debug(dynsys, snr, pure_time_data, noisy_time_data, freq_data,
     utils.plot_time_data(pure_time_data, dynsys, plot_name='pure_time_data')
     utils.plot_time_data(noisy_time_data, dynsys, plot_name='noisy_time_data')
     utils.plot_freq_data(freq_data, dynsys, plot_name='freq_data_amplitudes')
-    utils.plot_measurements_and_predictions_abs(
-        freqs=freq_data.freqs,
-        measurements=freq_data.outputs,
-        predictions=postparam.predict_outputs(
-            freqs=freq_data.freqs,
-            freq_data_inputs=freq_data.inputs,
-            admittance_matrix=dynsys.admittance_matrix,
-            dynsys_params=prior_params
-        ),
-        dynsys=dynsys,
-        plot_name='measurements_and_predictions_abs_prior'
-    )
-    utils.plot_measurements_and_predictions_abs(
-        freqs=freq_data.freqs,
-        measurements=freq_data.outputs,
-        predictions=postparam.predict_outputs(
-            freqs=freq_data.freqs,
-            freq_data_inputs=freq_data.inputs,
-            admittance_matrix=dynsys.admittance_matrix,
-            dynsys_params=posterior_params
-        ),
-        dynsys=dynsys,
-        plot_name='measurements_and_predictions_abs_posterior'
-    )
 
     obj_func = objective_function.ObjectiveFunction(
         freq_data=freq_data,
@@ -62,7 +38,7 @@ def handle_one_snr(dynsys, pure_time_data, snr):
     assert pure_time_data is not None
     assert 1.0 <= snr <= 100.0
 
-    n_runs = 1
+    n_runs = 5
     prior_params = np.zeros((len(dynsys.true_params), n_runs))
     posterior_params = np.zeros((len(dynsys.true_params), n_runs))
     opt_time = np.zeros(n_runs)
@@ -80,21 +56,20 @@ def handle_one_snr(dynsys, pure_time_data, snr):
             max_freq=dynsys.max_freq
         )
 
-        start_time = time.time()
         prior_params[:, i] = dynsys.perturb_true_params()
+
+        start_time = time.time()
         posterior_params[:, i] = postparam.compute_posterior_params(
             freq_data=freq_data,
             admittance_matrix=dynsys.admittance_matrix,
             prior_params=prior_params[:, i],
             prior_params_std=dynsys.param_uncertainty
         )
-
         end_time = time.time()
         opt_time[i] = end_time - start_time
 
         debug(
-            dynsys, snr,
-            pure_time_data, noisy_time_data, freq_data,
+            dynsys, snr, pure_time_data, noisy_time_data, freq_data,
             prior_params[:, i], posterior_params[:, i]
         )
 
@@ -102,22 +77,18 @@ def handle_one_snr(dynsys, pure_time_data, snr):
         'snr': snr,
         'prior_params': prior_params,
         'posterior_params': posterior_params,
-        'opt_time': opt_time
+        'optimization_time': opt_time
     }
 
 
 def main():
     dynsys = dynamical_system.DynamicalSystem()
     time_data = postparam.prepare_time_data(**dynsys.generate_time_data())
-
     snrs = 1.0 * np.arange(1, 21, 1)
     opt_info = []
 
     for snr in snrs:
-        # print('SNR =', snr)
         opt_info.append(handle_one_snr(dynsys, time_data, snr))
-        # print('prior_params:', opt_info[-1]['prior_params'])
-        # print('posterior_params:', opt_info[-1]['posterior_params'])
 
     utils.plot_params_convergence(
         dynsys=dynsys,
@@ -129,7 +100,13 @@ def main():
             snr_info['posterior_params'] for snr_info in opt_info
         ])
     )
-    # utils.plot_optimization_time()
+    utils.plot_optimization_time(
+        snrs=snrs,
+        optimization_time=np.array([
+            snr_info['optimization_time'] for snr_info in opt_info
+        ]),
+        dynsys=dynsys
+    )
 
 
 if __name__ == '__main__':
