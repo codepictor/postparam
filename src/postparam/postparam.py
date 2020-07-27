@@ -14,8 +14,6 @@ See examples for more detail.
 
 """
 
-import copy
-
 import numpy as np
 import sympy
 
@@ -25,7 +23,19 @@ from . import optimize
 
 
 def prepare_time_data(inputs, outputs, dt):
-    """"""
+    """Initialize the TimeData class based on raw data in time domain.
+
+    Args:
+        inputs (np.ndarray): Input data in time domain
+            with shape (n_inputs, n_data_points).
+        outputs (np.ndarray): Output data in time domain
+            with shape (n_outputs, n_data_points).
+        dt (double): Time step between data points.
+
+    Returns:
+        out (TimeData): Data in time domain
+            which are stored in the appropriate class.
+    """
     if inputs.shape[1] != outputs.shape[1]:
         raise ValueError('Number of points in inputs and outputs '
                          'must be equal.')
@@ -33,19 +43,16 @@ def prepare_time_data(inputs, outputs, dt):
         raise ValueError('dt must be a positive number')
 
     return data.TimeData(
-        inputs=inputs, outputs=outputs, dt=dt,
+        inputs=inputs.copy(), outputs=outputs.copy(), dt=dt,
         input_std_devs=None, output_std_devs=None
     )
 
 
-def prepare_freq_data(time_data, snr=None, min_freq=None, max_freq=None):
+def prepare_freq_data(time_data, min_freq=None, max_freq=None):
     """Transform data from time domain to frequency domain.
 
     Args:
         time_data (TimeData): The object containing data in time domain.
-        snr (double, optional): The value of SNR specifying noise
-            which will be applied to data in time domain.
-            If None, there will be no applying of any noise.
         min_freq (double, optional): The left border of analyzing data
             in frequency domain. Defaults to None that is equivalent to 0.
         max_freq (double, optional): The right border of analyzing data
@@ -56,21 +63,14 @@ def prepare_freq_data(time_data, snr=None, min_freq=None, max_freq=None):
         freq_data (FreqData): Data after transformation from time domain
             to frequency domain.
     """
-    if snr is not None and snr <= 0.0:
-        raise ValueError('SNR should be positive.')
     if min_freq < 0.0:
         raise ValueError('min_freq can not be negative.')
     if min_freq > max_freq:
         raise ValueError('min_freq must be less or equal to max_freq.')
-
-    time_data_copy = copy.deepcopy(time_data)
-
-    if snr is not None:
-        time_data_copy.apply_white_noise(snr)
-    elif time_data.input_std_devs is None or time_data.output_std_devs is None:
+    if time_data.input_std_devs is None or time_data.output_std_devs is None:
         raise ValueError('Measurement noise is not specified.')
 
-    freq_data = data.FreqData(time_data_copy)
+    freq_data = data.FreqData(time_data)
     freq_data.trim(min_freq, max_freq)
     return freq_data
 

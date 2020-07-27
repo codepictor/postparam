@@ -152,6 +152,8 @@ class TimeData(Data):
                 size=n_time_points
             )
 
+        return self
+
 
 class FreqData(Data):
     """Represent data in frequency domain.

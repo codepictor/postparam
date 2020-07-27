@@ -1,42 +1,64 @@
-"""Auxiliary functions to make some plots."""
+"""Auxiliary functions to produce some plots."""
 
 import os
 import os.path
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.rcParams['axes.titlesize'] = 44
+matplotlib.rcParams['axes.labelsize'] = 30
+matplotlib.rcParams['axes.linewidth'] = 2
+matplotlib.rcParams['lines.linewidth'] = 4
+matplotlib.rcParams['lines.markersize'] = 10
+matplotlib.rcParams['xtick.labelsize'] = 30
+matplotlib.rcParams['ytick.labelsize'] = 30
+matplotlib.rcParams['legend.fontsize'] = 30
+matplotlib.rcParams['legend.frameon'] = False
+matplotlib.rcParams['font.family'] = 'serif'
+matplotlib.rcParams['font.size'] = 30
+matplotlib.rcParams['mathtext.default'] = 'regular'
+matplotlib.rcParams['grid.linestyle'] = 'dashed'
+plt.style.use(['bmh'])
+plt.rc('text', usetex=True)
 
 
-def plot_time_data(inputs, outputs, dt, dynsys_name):
-    """"""
-
-    _plot_time_data(inputs, dt, dynsys_name, plot_name='time_inputs')
-    _plot_time_data(outputs, dt, dynsys_name, plot_name='time_outputs')
-
-
-def _plot_time_data(data, dt, dynsys_name, plot_name):
-    assert len(data.shape) == 2
-    assert dt > 0
+def plot_time_data(time_data, dynsys, plot_name):
+    """Plot inputs and outputs in time domain."""
+    assert time_data.inputs.shape[0] > 0
+    assert time_data.outputs.shape[0] > 0
+    assert time_data.dt > 0
     assert len(plot_name) > 0
 
-    n_sensors = data.shape[0]
+    n_sensors = time_data.inputs.shape[0] + time_data.outputs.shape[0]
+    t = np.array([i * time_data.dt for i in range(time_data.inputs.shape[1])])
     fig, axes = plt.subplots(
         n_sensors, 1,
-        figsize=(data.shape[1] // 25, 4 * n_sensors)
+        figsize=(25, 5 * n_sensors), sharex='all'
     )
 
-    for sensor_idx in range(data.shape[0]):
-        _plot_time_data_array(
-            ax=axes[sensor_idx] if n_sensors > 1 else axes,
-            time_data_array=data[sensor_idx],
-            sensor_name=('sensor' + str(sensor_idx))
+    for input_idx in range(time_data.inputs.shape[0]):
+        axes[input_idx].plot(
+            t, time_data.inputs[input_idx]
+        )
+        axes[input_idx].set_ylabel(
+            '$' + dynsys.inputs_names[input_idx] + ' (t)$'
         )
 
+    for output_idx in range(time_data.outputs.shape[0]):
+        axes[time_data.inputs.shape[0] + output_idx].plot(
+            t, time_data.outputs[output_idx]
+        )
+        axes[time_data.inputs.shape[0] + output_idx].set_ylabel(
+            '$' + dynsys.outputs_names[output_idx] + ' (t)$'
+        )
+
+    plt.xlabel('$t$ (seconds)')
     plt.tight_layout()
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys_name, plot_name + '.pdf'
+            '..', 'graphics', dynsys.system_name, plot_name + '.pdf'
         ),
         dpi=180,
         format='pdf'
@@ -44,35 +66,65 @@ def _plot_time_data(data, dt, dynsys_name, plot_name):
     plt.close(fig)
 
 
-def _plot_time_data_array(ax, time_data_array, sensor_name):
-    assert len(time_data_array.shape) == 1
-    assert len(sensor_name) > 0
+def plot_freq_data(freq_data, dynsys, plot_name):
+    """Plot inputs and outputs in frequency domain."""
+    assert freq_data.inputs.shape[0] > 0
+    assert freq_data.outputs.shape[0] > 0
+    assert freq_data.freqs.shape[0] == freq_data.inputs.shape[1]
+    assert freq_data.freqs.shape[0] == freq_data.outputs.shape[1]
+    assert len(plot_name) > 0
 
-    ax.plot(time_data_array)
-    ax.set_title(sensor_name)
+    n_sensors = freq_data.inputs.shape[0] + freq_data.outputs.shape[0]
+    fig, axes = plt.subplots(
+        n_sensors, 1,
+        figsize=(25, 5 * n_sensors), sharex='all'
+    )
+
+    for input_idx in range(freq_data.inputs.shape[0]):
+        axes[input_idx].plot(
+            freq_data.freqs, np.abs(freq_data.inputs[input_idx])
+        )
+        axes[input_idx].set_ylabel(
+            '$|' + dynsys.inputs_names[input_idx] + ' (\\nu)|$'
+        )
+
+    for output_idx in range(freq_data.outputs.shape[0]):
+        axes[freq_data.inputs.shape[0] + output_idx].plot(
+            freq_data.freqs, np.abs(freq_data.outputs[output_idx])
+        )
+        axes[freq_data.inputs.shape[0] + output_idx].set_ylabel(
+            '$|' + dynsys.outputs_names[output_idx] + ' (\\nu)|$'
+        )
+
+    plt.xlabel('$\\nu$ (Hz)')
+    plt.tight_layout()
+    plt.savefig(
+        os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            '..', 'graphics', dynsys.system_name, plot_name + '.pdf'
+        ),
+        dpi=180,
+        format='pdf'
+    )
+    plt.close(fig)
 
 
-def plot_objective_function(obj_func, true_params, param_names, dynsys_name):
+def plot_objective_function(obj_func, dynsys):
     """Make 1-D plots of the objective function."""
-    n_params = len(true_params)
+    n_params = len(dynsys.true_params)
     n_points = 500
-    fig, axes = plt.subplots(n_params, 1, figsize=(16, 6 * n_params))
+    fig, axes = plt.subplots(n_params, 1, figsize=(25, 10 * n_params))
 
     for param_idx in range(n_params):
-        true_param = true_params[param_idx]
-        args = np.tile(true_params, (n_points, 1))
+        true_param = dynsys.true_params[param_idx]
+        args = np.tile(dynsys.true_params, (n_points, 1))
         args[:, param_idx] = 1.0 * np.linspace(
             start=-true_param, stop=3*true_param, num=n_points
         )
-        obj_func_values = obj_func.compute(args)
-        param_name = (
-            param_names[param_idx] if param_names is not None
-            else 'param' + str(param_idx)
-        )
 
-        ax = axes[param_idx] if len(true_params) > 1 else axes
-        ax.set_title('Vary $' + param_name + '$', fontsize=20)
-        ax.plot(args[:, param_idx], obj_func_values)
+        param_name = dynsys.params_names[param_idx]
+        ax = axes[param_idx] if n_params > 1 else axes
+        ax.plot(args[:, param_idx], obj_func.compute(args))
         ax.axvline(true_param, alpha=0.75, color='red')
         ax.set_xlabel('$' + param_name + '$')
         ax.set_ylabel('$f(' + param_name + ')$')
@@ -81,7 +133,8 @@ def plot_objective_function(obj_func, true_params, param_names, dynsys_name):
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys_name, 'objective_function.pdf'
+            '..', 'graphics', dynsys.system_name,
+            'objective_function.pdf'
         ),
         dpi=180,
         format='pdf'
@@ -89,61 +142,83 @@ def plot_objective_function(obj_func, true_params, param_names, dynsys_name):
     plt.close(fig)
 
 
-def plot_measurements_and_predictions(freqs, measurements, predictions,
-                                      out_file_name, yscale=None, yticks=None,
-                                      xlabel=None, ylabel=None):
-    """Plot measured and predicted data."""
-    plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')
-    plt.figure(figsize=(24, 8))
+def plot_measurements_and_predictions_abs(freqs, measurements, predictions,
+                                          dynsys, plot_name):
+    """Plot absolute values of measured and predicted data."""
+    assert len(freqs.shape) == 1
+    assert len(measurements.shape) == len(predictions.shape) == 2
+    assert measurements.shape[0] == predictions.shape[0] == len(dynsys.outputs_names)
+    assert len(freqs) == measurements.shape[1] == predictions.shape[1]
+    assert len(plot_name) > 0
 
-    plt.plot(freqs, measurements, label='Measured', color='black')
-    plt.plot(freqs, predictions, label='Predicted', color='b')
-
-    if yscale is not None:
-        plt.yscale(yscale)
-    plt.tick_params(
-        axis='both', labelsize=60, direction='in', length=12, width=3, pad=12
+    n_outputs = measurements.shape[0]
+    fig, axes = plt.subplots(
+        n_outputs, 1,
+        figsize=(25, 10 * n_outputs), sharex='all'
     )
-    plt.yticks(yticks)
-    if xlabel is not None:
-        plt.xlabel(xlabel, fontsize=60)
-    if ylabel is not None:
-        plt.ylabel(ylabel, fontsize=60)
-    plt.grid(alpha=0.75)
-    plt.legend(loc='upper left', prop={'size': 50}, frameon=False, ncol=1)
 
+    for output_idx in range(n_outputs):
+        ax = axes[output_idx] if n_outputs > 1 else axes
+        ax.set_yscale('log')
+        ax.plot(
+            freqs, np.abs(measurements[output_idx]),
+            label='measured', color='black'
+        )
+        ax.plot(
+            freqs, np.abs(predictions[output_idx]),
+            label='predicted', color='blue'
+        )
+        ax.set_ylabel(
+            '$\\log (|' + dynsys.outputs_names[output_idx] + ' (\\nu)|)$'
+        )
+        ax.legend(loc='upper right')
+
+    plt.xlabel('$\\nu$ (Hz)')
     plt.tight_layout()
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', 'predictions_output_data',
-            out_file_name + '.pdf'
+            '..', 'graphics', dynsys.system_name, plot_name + '.pdf'
         ),
         dpi=180, format='pdf'
     )
     plt.close('all')
 
 
-def plot_params_convergence(dynsys, snrs, prior_values, posterior_values):
+def plot_params_convergence(snrs, prior_values, posterior_values, dynsys):
     """Plot convergence of parameters for different SNR."""
-    assert len(snrs) == len(posterior_values) == len(prior_values)
+    assert len(snrs.shape) == 1
+    assert len(prior_values.shape) == len(posterior_values.shape) == 3
+    assert len(snrs) == prior_values.shape[0] == posterior_values.shape[0]
     assert prior_values.shape[1] == posterior_values.shape[1]
+    assert prior_values.shape[1] == len(dynsys.true_params)
+    assert prior_values.shape[2] == posterior_values.shape[2]
 
-    plt.rc('font', family='serif')
-    plt.rc('text', usetex=True)
     n_params = len(dynsys.true_params)
-    fig, axes = plt.subplots(n_params, 1, figsize=(24, 12 * n_params))
+    fig, axes = plt.subplots(
+        n_params, 1,
+        figsize=(25, 10 * n_params), sharex='all'
+    )
 
     for param_idx in range(n_params):
-        _plot_param_convergence(
-            ax=axes[param_idx] if n_params > 1 else axes,
-            snrs=snrs,
-            prior_values=prior_values[:, param_idx],
-            posterior_values=posterior_values[:, param_idx],
-            true_value=dynsys.true_params[param_idx],
-            param_name=dynsys.params_names[param_idx]
+        ax = axes[param_idx] if n_params > 1 else axes
+        _plot_param_convergence_prior(
+            ax, snrs, prior_values=prior_values[:, param_idx, :]
         )
+        _plot_param_convergence_posterior(
+            ax, snrs, posterior_values=posterior_values[:, param_idx, :]
+        )
+        _plot_param_convergence_true(
+            ax, snrs, true_value=dynsys.true_params[param_idx]
+        )
+
+        ax.set_ylim((
+            0.5 * dynsys.true_params[param_idx],
+            1.5 * dynsys.true_params[param_idx]
+        ))
+        ax.set_xlabel('SNR')
+        ax.set_ylabel('$' + dynsys.params_names[param_idx] + '$')
+        ax.legend(loc='upper right')
 
     fig.tight_layout()
     plt.savefig(
@@ -156,39 +231,44 @@ def plot_params_convergence(dynsys, snrs, prior_values, posterior_values):
     plt.close(fig)
 
 
-def _plot_param_convergence(ax, snrs,
-                            prior_values, posterior_values,
-                            true_value, param_name):
-    assert len(snrs) == len(prior_values) == len(posterior_values)
-    # assert snrs == [1, 2, ..., 21]
+def _plot_param_convergence_prior(ax, snrs, prior_values):
+    # Fill [prior_mean - prior_std; prior_mean + prior_std]
+    assert len(prior_values.shape) == 2
+    assert len(snrs) == prior_values.shape[0]
 
+    mean = prior_values.mean(axis=1)
+    std = prior_values.std(axis=1)
     ax.plot(
-        snrs, prior_values,
+        snrs, mean,
         label='prior', linewidth=4, marker='o', color='b'
     )
+    ax.fill_between(
+        snrs, mean - std, mean + std,
+        color='b', alpha=0.2
+    )
+
+
+def _plot_param_convergence_posterior(ax, snrs, posterior_values):
+    # Fill [posterior_mean - posterior_std; posterior_mean + posterior_std]
+    assert len(posterior_values.shape) == 2
+    assert len(snrs) == posterior_values.shape[0]
+
+    mean = posterior_values.mean(axis=1)
+    std = posterior_values.std(axis=1)
     ax.plot(
-        snrs, posterior_values,
+        snrs, mean,
         label='posterior', linewidth=4, marker='o', color='g'
     )
+    ax.fill_between(
+        snrs, mean - std, mean + std,
+        color='g', alpha=0.3
+    )
+
+
+def _plot_param_convergence_true(ax, snrs, true_value):
+    # Draw the red line corresponding to true parameter
     ax.plot(
-        snrs, [true_value for _ in range(len(snrs))],
+        snrs, np.repeat(true_value, len(snrs)),
         label='true', linewidth=4, linestyle='dashed', color='r'
     )
-
-    ax.grid(alpha=0.75)
-    ax.tick_params(
-        axis='both', labelsize=60, direction='in',
-        length=12, width=3, pad=12
-    )
-    n_ticks = 5
-    y_min = 0.0
-    y_max = 2.0 * true_value
-    step = (y_max - y_min) / (n_ticks - 1)
-    ax.set_yticks(np.arange(y_min, y_max + step, step))
-    ax.set_ylim((y_min, y_max))
-    ax.set_xticks(range(0, len(snrs) + 1, 5))
-
-    ax.set_xlabel('SNR', fontsize=60)
-    ax.set_ylabel('$' + param_name + '$', labelpad=20, fontsize=60)
-    ax.legend(loc='upper right', prop={'size': 60}, frameon=True, ncol=3)
 

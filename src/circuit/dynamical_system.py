@@ -11,21 +11,25 @@ class DynamicalSystem:
         tau = self.true_params[0]
 
         min_t = 0.0
-        max_t = 100.0
+        max_t = 30.0
         dt = 0.05
 
         t = np.arange(min_t, max_t, step=dt)
-        inputs = np.array([
-            epsilon0 * np.cos(omega0 * t)
-        ])
-        outputs = np.array([
-            (epsilon0 / (1 + (tau * omega0)**2)) *
-            (tau * omega0 * np.sin(omega0 * t) + np.cos(omega0 * t) - np.exp(-t / tau))
-        ])
+        E = epsilon0 * np.cos(omega0 * t)
+        V = (
+            (
+                epsilon0 / (1 + (tau * omega0)**2)
+            ) *
+            (
+                tau * omega0 * np.sin(omega0 * t)
+                + np.cos(omega0 * t)
+                - np.exp(-t / tau)
+            )
+        )
 
         return {
-            'inputs': inputs,
-            'outputs': outputs,
+            'inputs': np.array([E]),
+            'outputs': np.array([V]),
             'dt': dt
         }
 
@@ -53,6 +57,14 @@ class DynamicalSystem:
     @property
     def params_names(self):
         return ['\\tau']
+
+    @property
+    def inputs_names(self):
+        return ['\\varepsilon']
+
+    @property
+    def outputs_names(self):
+        return ['V']
 
     @property
     def min_freq(self):

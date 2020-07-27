@@ -86,6 +86,14 @@ class DynamicalSystem:
         return ['m', 'B']
 
     @property
+    def inputs_names(self):
+        return ['F_x', 'F_y']
+
+    @property
+    def outputs_names(self):
+        return ['v_x', 'v_y']
+
+    @property
     def min_freq(self):
         return 0.0
 
