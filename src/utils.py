@@ -133,7 +133,7 @@ def plot_objective_function(obj_func, dynsys, prior_params, posterior_params):
         ax = axes[param_idx] if n_params > 1 else axes
         ax.plot(args[:, param_idx], obj_func.compute(args))
 
-        ax.axvline(true_param, label='true', alpha=0.5, color='red')
+        ax.axvline(true_param, label='true', alpha=0.5, color='r')
         ax.axvline(
             prior_params[param_idx],
             label='prior', alpha=0.5, color='b'

@@ -1,6 +1,8 @@
 # postparam
 
-Compute posterior parameters of a dynamical system using prior ones.
+Infer posterior parameters of a dynamical system using prior ones.
+The algorithm is based on Bayesian inference and is shown in the picture below.
+![algorithm](algorithm.png)
 
 ### Setting up the environment
 
