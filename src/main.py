@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from circuit import dynamical_system
+from viscosity import dynamical_system
 from postparam import postparam, objective_function
 import utils
 
@@ -19,7 +19,10 @@ def debug(dynsys, snr, pure_time_data, noisy_time_data, freq_data,
         prior_params=prior_params,
         prior_params_std=dynsys.param_uncertainty
     )
-    utils.plot_objective_function(obj_func, dynsys)
+    utils.plot_objective_function(
+        obj_func, dynsys,
+        prior_params, posterior_params
+    )
 
     print('=============================================================')
     print('SNR =', snr)

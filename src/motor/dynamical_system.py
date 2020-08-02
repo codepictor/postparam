@@ -32,7 +32,7 @@ class DynamicalSystem:
         sys = sp.signal.StateSpace(A, B, C, D)
 
         min_t = 0.0
-        max_t = 90.0
+        max_t = 60.0
         dt = 0.02
         tin = np.arange(min_t, max_t, step=dt)
 

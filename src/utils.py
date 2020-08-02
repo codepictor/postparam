@@ -5,6 +5,7 @@ import os.path
 
 import numpy as np
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.style.use(['bmh'])
 plt.rc('text', usetex=True)
@@ -60,7 +61,7 @@ def plot_time_data(time_data, dynsys, plot_name):
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys.system_name, plot_name + '.pdf'
+            '..', 'img', dynsys.system_name, plot_name + '.pdf'
         ),
         dpi=180,
         format='pdf'
@@ -103,7 +104,7 @@ def plot_freq_data(freq_data, dynsys, plot_name):
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys.system_name, plot_name + '.pdf'
+            '..', 'img', dynsys.system_name, plot_name + '.pdf'
         ),
         dpi=180,
         format='pdf'
@@ -111,8 +112,12 @@ def plot_freq_data(freq_data, dynsys, plot_name):
     plt.close(fig)
 
 
-def plot_objective_function(obj_func, dynsys):
+def plot_objective_function(obj_func, dynsys, prior_params, posterior_params):
     """Make 1-D plots of the objective function."""
+    assert len(prior_params.shape) == len(posterior_params.shape) == 1
+    assert prior_params.shape == posterior_params.shape
+    assert len(prior_params) == len(dynsys.true_params)
+
     n_params = len(dynsys.true_params)
     n_points = 500
     fig, axes = plt.subplots(n_params, 1, figsize=(20, 10 * n_params))
@@ -127,15 +132,26 @@ def plot_objective_function(obj_func, dynsys):
         param_name = dynsys.params_names[param_idx]
         ax = axes[param_idx] if n_params > 1 else axes
         ax.plot(args[:, param_idx], obj_func.compute(args))
-        ax.axvline(true_param, alpha=0.5, color='red')
+
+        ax.axvline(true_param, label='true', alpha=0.5, color='red')
+        ax.axvline(
+            prior_params[param_idx],
+            label='prior', alpha=0.5, color='b'
+        )
+        ax.axvline(
+            posterior_params[param_idx],
+            label='posterior', alpha=0.5, color='g'
+        )
+
         ax.set_xlabel('$' + param_name + '$')
         ax.set_ylabel('$f(' + param_name + ')$')
+        ax.legend()
 
     fig.tight_layout()
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys.system_name, 'objective_function.pdf'
+            '..', 'img', dynsys.system_name, 'objective_function.pdf'
         ),
         dpi=180,
         format='pdf'
@@ -185,7 +201,7 @@ def plot_params_convergence(snrs, prior_values, posterior_values, dynsys):
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys.system_name, 'params_convergences.pdf'
+            '..', 'img', dynsys.system_name, 'params_convergences.pdf'
         ),
         dpi=180, format='pdf'
     )
@@ -257,7 +273,7 @@ def plot_optimization_time(snrs, optimization_time, dynsys):
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'graphics', dynsys.system_name, 'optimization_time.pdf'
+            '..', 'img', dynsys.system_name, 'optimization_time.pdf'
         ),
         dpi=180, format='pdf'
     )
