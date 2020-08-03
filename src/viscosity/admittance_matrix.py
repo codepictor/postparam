@@ -28,6 +28,6 @@ class AdmittanceMatrix:
 
     @property
     def data(self):
-        """Admittance matrix of a system (sympy.Matrix)."""
+        """Admittance matrix of a dynamical system (sympy.Matrix)."""
         return self._admittance_matrix
 
