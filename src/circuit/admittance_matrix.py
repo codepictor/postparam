@@ -4,7 +4,7 @@ import sympy
 class AdmittanceMatrix:
 
     def __init__(self):
-        """Define relations between input and output data."""
+        """Define the relation between input and output data."""
         tau = sympy.symbols('tau', real=True)
         omega = sympy.symbols('omega', real=True)
 
@@ -16,16 +16,16 @@ class AdmittanceMatrix:
 
     @property
     def params(self):
-        """sympy.symbols which are parameters of a dynamical system."""
+        """Parameters of a dynamical system (list of sympy.symbols)."""
         return self._params
 
     @property
     def omega(self):
-        """sympy.symbol which represents symbol of frequency."""
+        """Frequency (sympy.symbol)."""
         return self._omega
 
     @property
     def data(self):
-        """Raw sympy.Matrix that is true admittance matrix of a system."""
+        """Admittance matrix of a system (sympy.Matrix)."""
         return self._admittance_matrix
 

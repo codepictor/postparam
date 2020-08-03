@@ -1,10 +1,8 @@
 """Objective function to minimize.
 
-To obtain posterior parameters of a dynamical system from prior parameters
-it is necessary to minimize the objective function (construction of it
-is based on Bayesian approach). Generally, only 'ObjectiveFunction'
-class should be used outside this module because other classes only
-help to construct the objective function.
+To get posterior parameters of a dynamical system using prior ones
+it is necessary to minimize the objective function which is based on
+the Bayesian inference.
 
 """
 
@@ -19,35 +17,26 @@ import sympy
 
 
 class ResidualVector:
-    """Wrapper for calculations of residual vector (denoted as R).
-
-     This class stores 2m (2*n_outputs, see the paper) functions
-     for further computing subvectors of the residual vector
-     at any given point (see the 'compute' method).
-
-    Attributes:
-        _freq_data (class FreqData): Data in frequency domain.
-        _vector (numpy.array): Preallocated buffer for vector R.
-        _exprs (list): compiled function to compute subvectors
-    """
+    """Residual vector of errors (denoted as R)."""
 
     def __init__(self, freq_data, admittance_matrix):
-        """Prepare for computing the residual vector at any point.
+        """Prepare the residual vector for computing at any point.
 
-        Store data in frequency domain and compiled functions (see
-        sympy.lambdify) for further computing all subvectors of
-        the vector R at any point.
+        Store data in frequency domain and compile functions
+        for further computing all subvectors of the vector R
+        at any point.
 
         Args:
             freq_data (FreqData): Data in frequency domain.
-            admittance_matrix (AdmittanceMatrix): Admittance matrix
+            admittance_matrix (AdmittanceMatrix): The admittance matrix
                 (denoted as Y) of a dynamical system.
         """
-        self._freq_data = freq_data
-        self._exprs = []
+
+        self._freq_data = freq_data  # data in frequency domain
+        self._exprs = []  # compiled functions to compute subvectors
         self._vector = np.zeros(
             2 * len(freq_data.outputs) * len(freq_data.freqs)
-        )
+        )  # buffer for the vector R
 
         Y = admittance_matrix.data
         m, n = Y.shape
@@ -83,7 +72,7 @@ class ResidualVector:
             sys_params (numpy.ndarray): Parameters of a dynamical system.
 
         Returns:
-            vector_R (numpy.array): Residual vector evaluated
+            out (numpy.array): Residual vector evaluated
                 at the given point.
         """
         n_freqs = len(self._freq_data.freqs)
@@ -102,18 +91,11 @@ class ResidualVector:
                 2.0 * np.pi * self._freq_data.freqs
             )
 
-        vector_R = self._vector  # no copying
-        return vector_R
+        return self._vector  # no copying
 
 
 class CovarianceMatrix:
-    """Wrapper for calculations of covariance matrix (denoted as gamma_L).
-
-    Attributes:
-        _freqs (np.array): Frequencies in frequency domain.
-        _matrix (scipy.sparse.csr_matrix): Preallocated buffer for gamma_L.
-        _exprs (list): compiled function to compute blocks of gamma_L.
-    """
+    """Error covariance matrix (denoted as gamma_L)."""
 
     def __init__(self, freq_data, admittance_matrix):
         """Prepares for computing the covariance matrix.
@@ -127,12 +109,12 @@ class CovarianceMatrix:
             admittance_matrix (AdmittanceMatrix): Admittance matrix
                 (denoted as Y) of a dynamical system.
         """
-        self._freqs = freq_data.freqs
+        self._freqs = freq_data.freqs  # frequencies
 
-        self._exprs = []
+        self._exprs = []  # compiled function to compute blocks of gamma_L
         self._init_exprs(freq_data, admittance_matrix)
 
-        self._matrix = None
+        self._matrix = None  # buffer for the matrix
         self._init_matrix(admittance_matrix.data.shape[0])
 
     def _init_exprs(self, freq_data, admittance_matrix):
@@ -188,7 +170,7 @@ class CovarianceMatrix:
             self._exprs.append(lambdified_row)
 
     def _init_matrix(self, n_outputs):
-        # Prepare sparse matrix
+        # prepare a sparse matrix
         block_size = len(self._freqs)
         cov_matrix_size = 2 * n_outputs * block_size
         matrix = np.zeros((cov_matrix_size, cov_matrix_size))
@@ -213,8 +195,8 @@ class CovarianceMatrix:
             sys_params (numpy.ndarray): Parameters of a dynamical system.
 
         Returns:
-            gamma_L (scipy.sparse.csr_matrix): the covariance matrix
-                evaluated at the given point
+            out (scipy.sparse.csr_matrix): The covariance matrix
+                evaluated at the given point.
         """
         block_size = len(self._freqs)
         n_freqs = len(self._freqs)
@@ -236,40 +218,30 @@ class CovarianceMatrix:
                 self._matrix[range(y_block_begin, y_block_end),
                              range(x_block_begin, x_block_end)] = block_diag
 
-        gamma_L = self._matrix  # no copying
-        return gamma_L
+        return self._matrix  # no copying
 
 
 class ObjectiveFunction:
-    """Wrapper for calculations of the objective function at any point.
-
-    Attributes:
-        _R (ResidualVector): Residual vector R.
-        _gamma_L (CovarianceMatrix): Covariance matrix gamma_L.
-        _prior_params (numpy.ndarray): Starting point to be passed
-            to the optimization routine.
-        _inv_gamma_g (numpy.ndarray): inverted diagonal covariance
-            matrix of prior generator parameters.
-    """
+    """Objective function to minimize."""
 
     def __init__(self, freq_data, admittance_matrix,
                  prior_params, prior_params_std):
-        """Prepare the objective function to be computed at any point.
+        """Prepare the objective function for computing at any point.
 
         Args:
             freq_data (FreqData): Data in frequency domain.
-            admittance_matrix (AdmittanceMatrix): Admittance matrix
+            admittance_matrix (AdmittanceMatrix): The admittance matrix
                 (denoted as Y) of a dynamical system.
             prior_params (numpy.ndarray): Prior parameters of a system.
-            prior_params_std (numpy.ndarray): Prior uncertainties in
-                system parameters (see the 'perturb_params' function).
+            prior_params_std (numpy.ndarray): Uncertainties in prior
+                dynamical system parameters.
         """
         self._R = ResidualVector(freq_data, admittance_matrix)
         self._gamma_L = CovarianceMatrix(freq_data, admittance_matrix)
-        self._prior_params = prior_params
+        self._prior_params = prior_params  # starting point
         self._inv_gamma_g = np.diag(
             1.0 / ((prior_params*prior_params_std)**2)
-        )
+        )  # inverted covariance matrix of prior parameters
 
         dill.settings['recurse'] = True
         cpu_count = os.cpu_count()
@@ -278,7 +250,7 @@ class ObjectiveFunction:
         self._process_pool = pp.ProcessPool(process_pool_size)
 
     def _compute(self, sys_params):
-        # compute value of the objective function at just one point
+        # compute value of the objective function at one point
         curr_delta_params = sys_params - self._prior_params
 
         computed_R = self._R.compute(sys_params)
@@ -302,11 +274,7 @@ class ObjectiveFunction:
         """Compute the objective function at the given point(s).
 
         This method just calls self._compute method. If the argument is
-        a 2D numpy.ndarray, computations will be performed in parallel
-        mode.
-
-        Note:
-            Remember that the order of parameters is extremely important.
+        a 2-D numpy.ndarray, computations will be done in parallel.
 
         Args:
             sys_params (numpy.ndarray): Parameters of a dynamical system.

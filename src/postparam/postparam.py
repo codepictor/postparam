@@ -1,16 +1,11 @@
-"""Bayesian framework for parameters identification of first order systems.
+"""Bayesian framework to infer parameters of a dynamical system.
 
-This module contains all functions which should be used by a user of
-the framework. It is not necessary to import other modules.
+This module contains all functions which should be used by a user.
+It is not necessary to import other modules.
 
 The typical baseline structures as follows:
 a user collects data in time domain, transforms it to frequency domain
-by employing 'prepare_data' function and obtains posterior parameters
-of an abstract dynamical system via 'compute_posterior_params'.
-To use the latter function it is necessary to define your own class
-representing the admittance matrix of your system.
-The format of the admittance matrix is fixed.
-See examples for more detail.
+and gets posterior parameters of a dynamical system from prior ones.
 
 """
 
@@ -57,11 +52,10 @@ def prepare_freq_data(time_data, min_freq=None, max_freq=None):
             in frequency domain. Defaults to None that is equivalent to 0.
         max_freq (double, optional): The right border of analyzing data
             in frequency domain. Defaults to None which means that
-            all frequencies will be used.
+            all available frequencies will be used.
 
     Returns:
-        freq_data (FreqData): Data after transformation from time domain
-            to frequency domain.
+        freq_data (FreqData): Data after the DFT.
     """
     if min_freq < 0.0:
         raise ValueError('min_freq can not be negative.')
@@ -77,21 +71,21 @@ def prepare_freq_data(time_data, min_freq=None, max_freq=None):
 
 def compute_posterior_params(freq_data, admittance_matrix,
                              prior_params, prior_params_std):
-    """Calculate posterior parameters employing Bayesian approach.
+    """Calculate posterior parameters using Bayesian inference.
 
     Args:
-        freq_data (FreqData): Data after transformation from time domain
-            to frequency domain produced by the 'prepare_data' function.
-        admittance_matrix (AdmittanceMatrix): User-defined class
-            representing an admittance matrix of a dynamical system.
+        freq_data (FreqData): Data after transformation
+            from time domain to frequency domain.
+        admittance_matrix (AdmittanceMatrix): An object representing
+            an admittance matrix of a dynamical system.
         prior_params (numpy.ndarray): Prior parameters of a system.
-        prior_params_std (numpy.ndarray): Prior uncertainties in
-            system parameters (see the 'perturb_params' function).
+        prior_params_std (numpy.ndarray): Prior uncertainties
+            in system parameters.
 
     Returns:
         posterior_params (numpy.ndarray): Posterior parameters
-            of a dynamical system calculated by employing Bayesian
-            approach and special optimization routine.
+            of a dynamical system calculated by employing the
+            Bayesian inference.
     """
     if (len(freq_data.outputs) != admittance_matrix.data.shape[0] or
             len(freq_data.inputs) != admittance_matrix.data.shape[1]):
@@ -115,7 +109,27 @@ def compute_posterior_params(freq_data, admittance_matrix,
 
 
 def predict_outputs(freqs, freq_data_inputs, admittance_matrix, dynsys_params):
-    """Calculate outputs based on admittance matrix and inputs."""
+    """Calculate outputs using the admittance matrix and inputs.
+
+    Args:
+        freqs (numpy.ndarray): Frequencies.
+        freq_data_inputs (numpy.ndarray): Input data in frequency domain.
+        admittance_matrix (AdmittanceMatrix): An object representing
+            the admittance matrix of a dynamical system.
+        dynsys_params (numpy.ndarray): Parameters of a dynamical system
+            which should be substituted into the admittance matrix.
+
+    Returns:
+        predictions (numpy.ndarray): The admittance matrix
+            multiplied by inputs for all frequencies.
+    """
+    if freq_data_inputs.shape[0] != admittance_matrix.data.shape[1]:
+        raise ValueError('Number of arrays in output data should be equal to '
+                         'number of rows that the admittance matrix has.')
+    if freqs.shape[0] != freq_data_inputs.shape[1]:
+        raise ValueError('Number of frequencies should be equal to '
+                         'number of data points.')
+
     n_inputs = admittance_matrix.data.shape[1]
     n_outputs = admittance_matrix.data.shape[0]
     n_freqs = len(freqs)
@@ -144,5 +158,6 @@ def predict_outputs(freqs, freq_data_inputs, admittance_matrix, dynsys_params):
         predictions[:, freq_idx] = (
             computed_Y[:, :, freq_idx] @ freq_data_inputs[:, freq_idx]
         )
+
     return predictions
 

@@ -38,7 +38,7 @@ class DynamicalSystem:
 
         omega0 = 2 * np.pi * 0.5  # 0.5 Hz
         V = 40 + 3 * np.cos(10 * omega0 * tin) + 2 * np.sin(2 * omega0 * tin)
-        start_T = 2.0
+        start_T = 0.5
         T = 0.05 + 0.05 * np.sin(omega0 * (tin - start_T) + 3 / 2 * np.pi)
         T[tin < start_T] = 0
 

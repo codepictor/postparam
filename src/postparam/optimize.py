@@ -8,14 +8,15 @@ def minimize(func, x0):
     """Minimize the objective function.
 
     Args:
-        func (ObjectiveFunction): Function to minimize.
-        x0 (numpy.ndarray): Starting point (typically, prior parameters).
+        func (ObjectiveFunction): A function to minimize.
+        x0 (numpy.ndarray): A starting point
+            (typically, prior parameters of a dynamical system).
 
     Returns:
-        x_min (numpy.ndarray): Found minimum.
+        out (numpy.ndarray): Found minimum.
     """
     if len(x0.shape) != 1:
-        raise ValueError('Initial guess x0 must be one-dimensional array.')
+        raise ValueError('A starting point must be one-dimensional array.')
 
     opt_res = sp.optimize.minimize(
         fun=lambda x: func.compute(x),
