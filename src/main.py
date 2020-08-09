@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from motor import dynamical_system
+from circuit import dynamical_system
 from postparam import postparam, objective_function
 import utils
 
@@ -80,7 +80,7 @@ def handle_one_snr(dynsys, pure_time_data, snr):
         'snr': snr,
         'prior_params': prior_params,
         'posterior_params': posterior_params,
-        'optimization_time': opt_time
+        'elapsed_time': opt_time
     }
 
 
@@ -106,7 +106,7 @@ def main():
     utils.plot_optimization_time(
         snrs=snrs,
         optimization_time=np.array([
-            snr_info['optimization_time'] for snr_info in opt_info
+            snr_info['elapsed_time'] for snr_info in opt_info
         ]),
         dynsys=dynsys
     )

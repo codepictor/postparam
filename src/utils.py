@@ -57,7 +57,9 @@ def plot_time_data(time_data, dynsys, plot_name):
         )
 
     plt.xlabel('$t$ (seconds)')
+    plt.suptitle('data (time domain)')
     fig.tight_layout()
+    fig.subplots_adjust(top=0.95)
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
@@ -100,7 +102,9 @@ def plot_freq_data(freq_data, dynsys, plot_name):
         )
 
     plt.xlabel('$\\nu$ (Hz)')
+    fig.suptitle('data (frequency domain)')
     fig.tight_layout()
+    fig.subplots_adjust(top=0.95)
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
@@ -147,7 +151,9 @@ def plot_objective_function(obj_func, dynsys, prior_params, posterior_params):
         ax.set_ylabel('$f(' + param_name + ')$')
         ax.legend()
 
+    fig.suptitle('objective function')
     fig.tight_layout()
+    fig.subplots_adjust(top=0.95)
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
@@ -197,7 +203,9 @@ def plot_params_convergence(snrs, prior_values, posterior_values, dynsys):
         ax.set_ylabel('$' + dynsys.params_names[param_idx] + '$')
         ax.legend(loc='upper right')
 
+    fig.suptitle('results of the algorithm')
     fig.tight_layout()
+    fig.subplots_adjust(top=0.95)
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
@@ -267,13 +275,13 @@ def plot_optimization_time(snrs, optimization_time, dynsys):
 
     plt.xlabel('SNR')
     plt.ylabel('$t$ (seconds)')
-    plt.title('optimization time: mean +- std')
+    plt.title('elapsed time')
 
     fig.tight_layout()
     plt.savefig(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
-            '..', 'img', dynsys.system_name, 'optimization_time.pdf'
+            '..', 'img', dynsys.system_name, 'elapsed_time.pdf'
         ),
         dpi=180, format='pdf'
     )
