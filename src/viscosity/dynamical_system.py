@@ -12,7 +12,7 @@ class DynamicalSystem:
         B = self.true_params[1]
 
         min_t = 0.0
-        max_t = 40.0
+        max_t = 50.0
         dt = 0.2
         t = np.arange(min_t, max_t, step=dt)
 
