@@ -74,11 +74,11 @@ class DynamicalSystem:
 
     @property
     def inputs_names(self):
-        return ['abs(V)', 'angle(V)']
+        return ['|V|', r'| \varphi_V |']
 
     @property
     def outputs_names(self):
-        return ['abs(I)', 'angle(I)']
+        return ['|I|', r'| \varphi_I |']
 
     @property
     def min_freq(self):
