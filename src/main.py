@@ -41,7 +41,7 @@ def handle_one_snr(dynsys, pure_time_data, snr):
     assert pure_time_data is not None
     assert 1.0 <= snr <= 100.0
 
-    n_runs = 250
+    n_runs = 1  # 250
     prior_params = np.zeros((len(dynsys.true_params), n_runs))
     posterior_params = np.zeros((len(dynsys.true_params), n_runs))
     opt_time = np.zeros(n_runs)
